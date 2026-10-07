@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useStore } from '../data/store'
+import heroImg from '../assets/strokes/smash.jpg'
 
 export default function LandingPage() {
   const { activeProfile, getPlayer, players } = useStore()
@@ -13,38 +14,28 @@ export default function LandingPage() {
   return (
     <div className="landing">
       <section className="landing-hero">
-        <span className="landing-eyebrow">KotoFit · Jersey City</span>
-        <h1 className="landing-title">One clear plan for every player.</h1>
-        <p className="landing-lede">
-          A coach checks where a player is now, the player picks what they want out of the
-          sport, and KotoFit lays out the plan to get there — the skills to grow, the drills
-          to do, and roughly how many classes it takes.
-        </p>
-        {resume && (
-          <button
-            type="button"
-            className="landing-resume"
-            onClick={() => navigate(`/player/${resume.id}`)}
-          >
-            Continue as {resume.name} →
-          </button>
-        )}
+        <img className="landing-hero-img" src={heroImg} alt="" aria-hidden="true" />
+        <div className="landing-hero-body">
+          <span className="landing-eyebrow">KotoFit · Jersey City</span>
+          <h1 className="landing-title">One clear plan for every player.</h1>
+          <p className="landing-lede">
+            A coach checks where a player is now, the player picks what they want out of the
+            sport, and KotoFit lays out the plan to get there — the skills to grow, the drills
+            to do, and roughly how many classes it takes.
+          </p>
+          {resume && (
+            <button
+              type="button"
+              className="landing-resume"
+              onClick={() => navigate(`/player/${resume.id}`)}
+            >
+              Continue as {resume.name} →
+            </button>
+          )}
+        </div>
       </section>
 
       <section className="landing-cards">
-        <Link to="/register" className="landing-card">
-          <span className="landing-card-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-            </svg>
-          </span>
-          <span className="landing-card-title">New player</span>
-          <span className="landing-card-desc">
-            Answer a few quick questions, get a suggested plan, and start straight away.
-          </span>
-          <span className="landing-card-cta">Get started →</span>
-        </Link>
-
         <Link to="/players" className="landing-card">
           <span className="landing-card-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
@@ -53,11 +44,24 @@ export default function LandingPage() {
               <path d="M16 6.5a3 3 0 0 1 0 6M18 19c0-2.4-1.2-4.2-3-4.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </span>
-          <span className="landing-card-title">Player plans</span>
+          <span className="landing-card-title">Mock players</span>
           <span className="landing-card-desc">
-            Open any player to see their plan, week by week, and how it's going.
+            Browse the demo roster and open any plan, week by week — no sign-in needed.
           </span>
           <span className="landing-card-cta">{players.length} players →</span>
+        </Link>
+
+        <Link to="/login?next=%2F" className="landing-card">
+          <span className="landing-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="landing-card-title">Player portal</span>
+          <span className="landing-card-desc">
+            Sign in to see your own plan, or create a family account to get started.
+          </span>
+          <span className="landing-card-cta">Sign in →</span>
         </Link>
 
         <Link to="/coach" className="landing-card">

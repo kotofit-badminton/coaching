@@ -5,6 +5,7 @@ import { useStore } from '../../data/store'
 import { ageGroupLabel, bandForAge } from '../../data/definitions'
 import { generateJourney } from '../../data/generateJourney'
 import { objectiveBlurbs, objectiveLabels } from '../../data/journeyTemplates'
+import { supabase, supabaseConfigured } from '../../lib/supabase'
 import {
   ageFromBandAnswer,
   evaluateQuiz,
@@ -16,7 +17,12 @@ import JourneyView from '../journey/JourneyView'
 const TODAY = '2026-08-30'
 const OBJECTIVES: Objective[] = ['fun', 'fitness', 'competitive']
 
-export default function RegisterFlow() {
+interface Props {
+  /** Player-portal sign-up: also creates a Supabase account before the plan. */
+  withAccount?: boolean
+}
+
+export default function RegisterFlow({ withAccount = false }: Props) {
   const { onboardPlayer, signInAsPlayer } = useStore()
   const navigate = useNavigate()
 
@@ -24,6 +30,12 @@ export default function RegisterFlow() {
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [step, setStep] = useState(0) // 0 = name; 1..N = questions; N+1 = results
   const [chosen, setChosen] = useState<Objective | null>(null)
+
+  const [accountEmail, setAccountEmail] = useState('')
+  const [accountPassword, setAccountPassword] = useState('')
+  const [accountBusy, setAccountBusy] = useState(false)
+  const [accountError, setAccountError] = useState<string | null>(null)
+  const [accountNotice, setAccountNotice] = useState<string | null>(null)
 
   const questions = useMemo(() => visibleQuestions(answers), [answers])
   const totalSteps = 1 + questions.length
@@ -78,19 +90,46 @@ export default function RegisterFlow() {
         ? Boolean(answers[currentQuestion.id])
         : true
 
-  function create() {
-    if (!result) return
+  function createLocalPlayer() {
     const id = onboardPlayer({
       name: name.trim(),
       age,
       objective: selectedObjective,
-      baselineScores: result.baselineScores,
+      baselineScores: result!.baselineScores,
       notes: summariseAnswers(answers, suggested, selectedObjective),
       quizAnswers: answers,
       date: TODAY,
     })
     signInAsPlayer(id)
+    return id
+  }
+
+  function create() {
+    if (!result) return
+    const id = createLocalPlayer()
     navigate(`/player/${id}`)
+  }
+
+  async function createWithAccount(e: React.FormEvent) {
+    e.preventDefault()
+    if (!result || !supabaseConfigured) return
+    setAccountBusy(true)
+    setAccountError(null)
+    setAccountNotice(null)
+    const { error: err } = await supabase.auth.signUp({
+      email: accountEmail,
+      password: accountPassword,
+      options: { emailRedirectTo: `${window.location.origin}/login` },
+    })
+    setAccountBusy(false)
+    if (err) {
+      setAccountError(err.message)
+      return
+    }
+    createLocalPlayer()
+    setAccountNotice(
+      `Account created for ${accountEmail}. Check your email to confirm it, then sign in to see ${name.trim() || 'the'}'s plan.`,
+    )
   }
 
   const maxObjScore = result
@@ -208,9 +247,51 @@ export default function RegisterFlow() {
               ))}
             </div>
 
-            <button type="button" className="form-submit quiz-create" onClick={create}>
-              Start {name.trim() || 'this player'}'s {objectiveLabels[selectedObjective]} plan
-            </button>
+            {withAccount ? (
+              accountNotice ? (
+                <p className="admin-saved">{accountNotice}</p>
+              ) : (
+                <form className="auth-form quiz-account-form" onSubmit={createWithAccount}>
+                  <p className="section-subtitle">
+                    Create your family account to save {name.trim() || 'this player'}'s plan
+                    and check in on it any time.
+                  </p>
+                  <label className="form-field">
+                    <span>Your email</span>
+                    <input
+                      type="email"
+                      autoComplete="email"
+                      value={accountEmail}
+                      onChange={(e) => setAccountEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      required
+                    />
+                  </label>
+                  <label className="form-field">
+                    <span>Password</span>
+                    <input
+                      type="password"
+                      autoComplete="new-password"
+                      value={accountPassword}
+                      onChange={(e) => setAccountPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      minLength={6}
+                    />
+                  </label>
+                  {accountError && <p className="auth-error">{accountError}</p>}
+                  <button type="submit" className="form-submit quiz-create" disabled={accountBusy}>
+                    {accountBusy
+                      ? 'Please wait…'
+                      : `Create account & start ${objectiveLabels[selectedObjective]} plan`}
+                  </button>
+                </form>
+              )
+            ) : (
+              <button type="button" className="form-submit quiz-create" onClick={create}>
+                Start {name.trim() || 'this player'}'s {objectiveLabels[selectedObjective]} plan
+              </button>
+            )}
           </section>
 
           <div>

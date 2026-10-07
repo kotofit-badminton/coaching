@@ -30,6 +30,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterFlow />} />
+          <Route path="/signup" element={<RegisterFlow withAccount />} />
           <Route path="/players" element={<PlayerPicker />} />
           <Route path="/player/:playerId" element={<PlayerRoute />} />
           <Route

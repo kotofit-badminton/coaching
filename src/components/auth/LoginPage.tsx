@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase, supabaseConfigured } from '../../lib/supabase'
 
 export default function LoginPage() {
@@ -7,12 +7,10 @@ export default function LoginPage() {
   const next = params.get('next') || '/'
   const navigate = useNavigate()
 
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
 
   if (!supabaseConfigured) {
     return (
@@ -27,44 +25,26 @@ export default function LoginPage() {
     e.preventDefault()
     setBusy(true)
     setError(null)
-    setNotice(null)
-    if (mode === 'signin') {
-      const { error: err } = await supabase.auth.signInWithPassword({ email, password })
-      setBusy(false)
-      if (err) setError('That email or password does not match.')
-      else navigate(next)
-    } else {
-      const { error: err } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/login?next=${encodeURIComponent(next)}`,
-        },
-      })
-      setBusy(false)
-      if (err) setError(err.message)
-      else setNotice('Check your email to confirm your account, then sign in.')
-    }
+    const { error: err } = await supabase.auth.signInWithPassword({ email, password })
+    setBusy(false)
+    if (err) setError('That email or password does not match.')
+    else navigate(next)
   }
 
   return (
     <section className="card auth-card">
-      <h2>{mode === 'signin' ? 'Sign in' : 'Create an account'}</h2>
-      <p className="section-subtitle">
-        {mode === 'signin'
-          ? 'Use the email and password you signed up with.'
-          : 'New accounts are for families. Coaches and admins are set up by the club.'}
-      </p>
+      <h2>Sign in</h2>
+      <p className="section-subtitle">Use the email and password you signed up with.</p>
       <form onSubmit={submit} className="admin-form">
         <label className="form-field">
           <span>Email</span>
-          <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
         </label>
         <label className="form-field">
           <span>Password</span>
           <input
             type="password"
-            autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -72,22 +52,17 @@ export default function LoginPage() {
           />
         </label>
         {error && <p className="coach-reeval-warn">{error}</p>}
-        {notice && <p className="admin-saved">{notice}</p>}
         <button type="submit" className="form-submit" disabled={busy}>
-          {mode === 'signin' ? 'Sign in' : 'Create account'}
+          {busy ? 'Please wait…' : 'Sign in'}
         </button>
       </form>
-      <button
-        type="button"
-        className="reset-btn"
-        onClick={() => {
-          setMode(mode === 'signin' ? 'signup' : 'signin')
-          setError(null)
-          setNotice(null)
-        }}
-      >
-        {mode === 'signin' ? 'New here? Create an account' : 'Already have an account? Sign in'}
-      </button>
+      <Link to="/signup" className="reset-btn">
+        New here? Create an account
+      </Link>
+      <p className="section-subtitle">
+        New families answer a few quick questions about the player first, then set up the
+        account at the end. Coaches and admins are set up by the club.
+      </p>
     </section>
   )
 }

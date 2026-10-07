@@ -1,7 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useStore } from '../data/store'
 import ThemeToggle from './ThemeToggle'
-import ResetButton from './ResetButton'
 import { supabase, supabaseConfigured } from '../lib/supabase'
 
 export default function AppHeader() {
@@ -55,7 +54,6 @@ export default function AppHeader() {
             Sign in
           </Link>
         )}
-        <ResetButton />
         <ThemeToggle />
       </div>
     </header>

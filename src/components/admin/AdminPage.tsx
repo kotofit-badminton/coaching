@@ -3,14 +3,16 @@ import { Link } from 'react-router-dom'
 import ObjectiveGroups, { type ClassPrefill } from './ObjectiveGroups'
 import RegisterFlow from '../register/RegisterFlow'
 import Classes from './Classes'
+import SupportingDashboard from '../SupportingDashboard'
 import { useStore } from '../../data/store'
 
-type Tab = 'roster' | 'register' | 'classes'
+type Tab = 'roster' | 'register' | 'classes' | 'sample'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'roster', label: 'Roster by objective' },
   { id: 'register', label: 'Register a player' },
   { id: 'classes', label: 'Classes' },
+  { id: 'sample', label: 'Sample history (Vikram)' },
 ]
 
 export default function AdminPage() {
@@ -55,6 +57,15 @@ export default function AdminPage() {
       {tab === 'register' && <RegisterFlow />}
       {tab === 'classes' && (
         <Classes prefill={prefill} onConsumePrefill={() => setPrefill(null)} />
+      )}
+      {tab === 'sample' && (
+        <div className="admin-sample-history">
+          <p className="section-subtitle">
+            Vikram's original hand-authored mockup data, kept for reference. It's fixed sample
+            data, not tied to his live plan.
+          </p>
+          <SupportingDashboard />
+        </div>
       )}
     </div>
   )

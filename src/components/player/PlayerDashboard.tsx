@@ -4,7 +4,6 @@ import { useStore } from '../../data/store'
 import JourneyProjection from '../journey/JourneyProjection'
 import JourneyMap from '../journey/JourneyMap'
 import JourneyProgressTimeline from '../journey/JourneyProgressTimeline'
-import SupportingDashboard from '../SupportingDashboard'
 import PlayerNav, { type NavGroup } from './PlayerNav'
 import PlayerOverview from './PlayerOverview'
 import PlayerBlockReview from './PlayerBlockReview'
@@ -24,9 +23,18 @@ import ProgressTabs from './ProgressTabs'
 
 // Where a parent goes next from each screen.
 const NEXT_LINKS: Record<string, { id: string; label: string }[]> = {
-  plan: [{ id: 'progress', label: 'See progress' }],
-  progress: [{ id: 'plan', label: 'See the plan' }],
-  diary: [{ id: 'plan', label: 'See the plan' }],
+  plan: [
+    { id: 'progress', label: 'See progress' },
+    { id: 'diary', label: 'See records' },
+  ],
+  progress: [
+    { id: 'plan', label: 'See the plan' },
+    { id: 'diary', label: 'See records' },
+  ],
+  diary: [
+    { id: 'plan', label: 'See the plan' },
+    { id: 'progress', label: 'See progress' },
+  ],
 }
 
 export default function PlayerDashboard() {
@@ -60,7 +68,6 @@ export default function PlayerDashboard() {
   const onboarding = getOnboarding(player.id)
   const band = player.band
   const name = player.name
-  const hasHistory = player.id === 'p-vikram'
 
   if (!journey) {
     return (
@@ -113,13 +120,6 @@ export default function PlayerDashboard() {
       ],
     },
   ]
-  if (hasHistory) {
-    groups[3].items.push({
-      id: 'history',
-      label: 'Sample history',
-      desc: "Vikram's original hand-authored dashboard (extra sample data)",
-    })
-  }
 
   function panel() {
     if (!journey) return null
@@ -140,13 +140,32 @@ export default function PlayerDashboard() {
         )
       case 'plan':
         return (
-          <>
-            <PlayerNextUp journey={journey} band={band} />
-            <JourneyMap journey={journey} band={band} subjectName={name} />
-            <PlayerDrills journey={journey} />
-            <PlayerHomework journey={journey} band={band} />
-            <PlayerAttendance journey={journey} />
-          </>
+          <ProgressTabs
+            key={player!.id}
+            tabs={[
+              {
+                id: 'map',
+                label: 'Map',
+                content: (
+                  <>
+                    <PlayerNextUp journey={journey} band={band} />
+                    <JourneyMap journey={journey} band={band} subjectName={name} />
+                  </>
+                ),
+              },
+              {
+                id: 'practice',
+                label: 'Practice',
+                content: (
+                  <>
+                    <PlayerDrills journey={journey} />
+                    <PlayerHomework journey={journey} band={band} />
+                  </>
+                ),
+              },
+              { id: 'attendance', label: 'Attendance', content: <PlayerAttendance journey={journey} /> },
+            ]}
+          />
         )
       case 'progress':
         return (
@@ -155,7 +174,7 @@ export default function PlayerDashboard() {
             <ProgressTabs
               key={player!.id}
               tabs={[
-                { id: 'every', label: 'Skills', content: <StrokeCards journey={journey} /> },
+                { id: 'every', label: 'Skills', content: <StrokeCards journey={journey} band={band} /> },
                 {
                   id: 'goals',
                   label: 'Goals',
@@ -173,15 +192,24 @@ export default function PlayerDashboard() {
         )
       case 'diary':
         return (
-          <>
-            <PlayerDiary playerId={player!.id} playerName={name} />
-            <JourneyProgressTimeline journey={journey} band={band} />
-            <PlayerMatches playerId={player!.id} playerName={name} />
-            <PlayerClips playerId={player!.id} playerName={name} />
-          </>
+          <ProgressTabs
+            key={player!.id}
+            tabs={[
+              { id: 'diary', label: 'Diary', content: <PlayerDiary playerId={player!.id} playerName={name} /> },
+              { id: 'updates', label: 'Coach updates', content: <JourneyProgressTimeline journey={journey} band={band} /> },
+              {
+                id: 'media',
+                label: 'Matches & clips',
+                content: (
+                  <>
+                    <PlayerMatches playerId={player!.id} playerName={name} />
+                    <PlayerClips playerId={player!.id} playerName={name} />
+                  </>
+                ),
+              },
+            ]}
+          />
         )
-      case 'history':
-        return <SupportingDashboard />
       default:
         return null
     }

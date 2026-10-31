@@ -15,7 +15,6 @@ export default function MediaJournal({ assessments }: Props) {
   return (
     <section className="card">
       <h2>Media journal</h2>
-      <p className="section-subtitle">Photos and videos tied to each check-in</p>
       <div className="media-scroll">
         {items.map((item, i) => (
           <div className="media-tile" key={`${item.assessmentId}-${i}`}>

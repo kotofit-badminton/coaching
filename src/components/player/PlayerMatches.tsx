@@ -10,7 +10,7 @@ interface Props {
   playerName: string
 }
 
-export default function PlayerMatches({ playerId, playerName }: Props) {
+export default function PlayerMatches({ playerId }: Props) {
   const { getMatches } = useStore()
   const matches = getMatches(playerId)
   const [adding, setAdding] = useState(false)
@@ -30,14 +30,11 @@ export default function PlayerMatches({ playerId, playerName }: Props) {
           {adding ? 'Close' : '+ Add a match'}
         </button>
       </div>
-      <p className="section-subtitle">
-        Every game {playerName} has played — friendly or tournament — with the score and a
-        short note about how it went. {matches.length > 0 && (
-          <>
-            So far: <strong>{wins}</strong> won of {matches.length}.
-          </>
-        )}
-      </p>
+      {matches.length > 0 && (
+        <p className="section-subtitle">
+          <strong>{wins}</strong> won of {matches.length}
+        </p>
+      )}
 
       {adding && <AddMatchForm playerId={playerId} onDone={() => setAdding(false)} />}
 

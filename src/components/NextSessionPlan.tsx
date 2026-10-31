@@ -49,7 +49,6 @@ export default function NextSessionPlan({
           + Add to calendar
         </button>
       </div>
-      <p className="section-subtitle">What the coach is planning to focus on</p>
 
       <ul className="next-session-list">
         {lowestMetrics.map(({ metric }) => (

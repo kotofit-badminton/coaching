@@ -157,10 +157,7 @@ export default function RegisterFlow({ withAccount = false }: Props) {
       {step === 0 && (
         <section className="card quiz-card">
           <h2>Let's find the right plan</h2>
-          <p className="section-subtitle">
-            A few quick questions about where the player is now and what they'd like to get
-            out of it. We'll suggest a plan at the end — you choose.
-          </p>
+          <p className="section-subtitle">A few quick questions about the player.</p>
           <label className="form-field">
             <span>Player's first name</span>
             <input
@@ -209,10 +206,7 @@ export default function RegisterFlow({ withAccount = false }: Props) {
                 {JOURNEY_LABELS[assignedObjective]}
               </span>
             </div>
-            <p className="section-subtitle">
-              Ages 5–7 follow the Fun / light compete plan, ages 8 and up follow Competitive. A
-              coach can switch it later if needed.
-            </p>
+            <p className="section-subtitle">A coach can switch it later if needed.</p>
 
             {withAccount ? (
               accountNotice ? (

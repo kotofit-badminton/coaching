@@ -14,9 +14,7 @@ export default function CoachClips({ clips, bandDef }: Props) {
   return (
     <section className="card">
       <h2>Coach clips</h2>
-      <p className="section-subtitle">
-        Short breakdowns from the coach reviewing session footage — tap a clip to read along
-      </p>
+      <p className="section-subtitle">Tap a clip to read along</p>
       <div className="clip-grid">
         {clips.map((clip, i) => {
           const metricLabel = clip.metricKey

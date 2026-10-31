@@ -17,7 +17,7 @@ export default function Milestones({ milestones }: Props) {
   return (
     <section className="card">
       <h2>Milestones &amp; badges</h2>
-      <p className="section-subtitle">Unlocked achievements and what's next — tap a badge to revisit it</p>
+      <p className="section-subtitle">Tap a badge to revisit it</p>
 
       {inProgress.length > 0 && (
         <div className="milestone-in-progress-list">

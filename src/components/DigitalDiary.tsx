@@ -67,10 +67,7 @@ export default function DigitalDiary({ sessionNotes }: Props) {
       <div className="diary-header">
         <div>
           <h2>Digital diary</h2>
-          <p className="section-subtitle">
-            {sessionNotes.length} session notes logged by coach &amp; player — select a date to
-            read
-          </p>
+          <p className="section-subtitle">{sessionNotes.length} notes — select a date to read</p>
         </div>
       </div>
 

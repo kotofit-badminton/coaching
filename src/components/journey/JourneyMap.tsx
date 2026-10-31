@@ -131,9 +131,7 @@ export default function JourneyMap({ journey, band, subjectName = 'They' }: Prop
           {objectiveLabels[journey.objective]} · {total} weeks · {perWeek} a week
         </span>
       </div>
-      <p className="section-subtitle">
-        {phases.length} steps over {total} weeks. Tap a week on the trail to see what's in it.
-      </p>
+      <p className="section-subtitle">Tap a week on the trail to see what's in it</p>
       <p className="jmap-goal">
         <span className="jmap-goal-label">Where it leads</span> {journey.targetSummary}
       </p>

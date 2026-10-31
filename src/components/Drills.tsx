@@ -10,9 +10,7 @@ export default function Drills({ drills }: Props) {
   return (
     <section className="card">
       <h2>Drills</h2>
-      <p className="section-subtitle">
-        Popular drills in rotation this training block, with the latest coach rating and notes
-      </p>
+      <p className="section-subtitle">In rotation this block</p>
       <div className="drill-grid">
         {drills.map((drill) => {
           const latest = drill.ratings[drill.ratings.length - 1]

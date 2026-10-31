@@ -20,7 +20,7 @@ export default function PlayerPicker() {
     <div className="picker">
       <div className="picker-head">
         <h1>Choose a player</h1>
-        <p className="section-subtitle">Open a player to see their plan and how it's going.</p>
+        <p className="section-subtitle">Open a player to see their plan.</p>
       </div>
 
       {OBJECTIVES.map((objective) => {

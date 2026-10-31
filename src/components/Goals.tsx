@@ -50,7 +50,7 @@ export default function Goals({ goals, bandDef }: Props) {
   return (
     <section className="card">
       <h2>Training goals</h2>
-      <p className="section-subtitle">Weekly and monthly targets set with the coach</p>
+      <p className="section-subtitle">Set with the coach</p>
 
       <div className="goals-group">
         <h3 className="goals-group-title">This week</h3>

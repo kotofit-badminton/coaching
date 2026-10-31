@@ -11,7 +11,7 @@ export default function CoachNotes({ assessments }: Props) {
   return (
     <section className="card">
       <h2>Coach notes</h2>
-      <p className="section-subtitle">Freeform notes from each check-in, most recent first</p>
+      <p className="section-subtitle">Most recent first</p>
       <div className="notes-list">
         {notes.map((a) => (
           <div className="note-item" key={a.id}>

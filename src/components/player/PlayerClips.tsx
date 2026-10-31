@@ -31,10 +31,7 @@ export default function PlayerClips({ playerId, playerName }: Props) {
           {adding ? 'Close' : '+ Add a clip'}
         </button>
       </div>
-      <p className="section-subtitle">
-        Short video and audio clips — the coach points out something to fix, and {playerName}{' '}
-        saves moments worth remembering. (Placeholders here; real clips would attach a file.)
-      </p>
+      <p className="section-subtitle">Coach notes and saved moments</p>
 
       {adding && <AddClipForm playerId={playerId} playerName={playerName} onDone={() => setAdding(false)} />}
 

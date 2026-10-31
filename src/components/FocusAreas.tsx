@@ -17,10 +17,7 @@ export default function FocusAreas({ bandDef, assessments }: Props) {
   return (
     <section className="card">
       <h2>Focus areas</h2>
-      <p className="section-subtitle">
-        The {FOCUS_COUNT} lowest-scoring metrics from the latest check-in — where to concentrate
-        practice next
-      </p>
+      <p className="section-subtitle">Top {FOCUS_COUNT} to practise next</p>
       <div className="focus-list">
         {ranked.map(({ metric, score }, i) => (
           <div className="focus-card" key={metric.key}>

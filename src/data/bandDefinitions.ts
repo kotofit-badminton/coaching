@@ -35,7 +35,7 @@ export const bandDefinitions: Record<'A' | 'B', BandDefinition> = {
       },
       {
         key: 'serveConsistency',
-        label: 'Serve consistency (in-court)',
+        label: 'Serve consistency',
         weight: 0.14,
         anchors: {
           1: 'Rarely clears net/lands in',

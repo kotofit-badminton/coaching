@@ -21,22 +21,6 @@ import PlayerDiary from './PlayerDiary'
 import StrokeCards from './StrokeCards'
 import ProgressTabs from './ProgressTabs'
 
-// Where a parent goes next from each screen.
-const NEXT_LINKS: Record<string, { id: string; label: string }[]> = {
-  plan: [
-    { id: 'progress', label: 'See progress' },
-    { id: 'diary', label: 'See records' },
-  ],
-  progress: [
-    { id: 'plan', label: 'See the plan' },
-    { id: 'diary', label: 'See records' },
-  ],
-  diary: [
-    { id: 'plan', label: 'See the plan' },
-    { id: 'progress', label: 'See progress' },
-  ],
-}
-
 export default function PlayerDashboard() {
   const { playerId = '' } = useParams()
   const { getPlayer, getJourney, getOnboarding, signInAsPlayer } = useStore()
@@ -80,45 +64,10 @@ export default function PlayerDashboard() {
   }
 
   const groups: NavGroup[] = [
-    {
-      items: [
-        {
-          id: 'overview',
-          label: 'Overview',
-          desc: 'Where things stand, and what’s next',
-        },
-      ],
-    },
-    {
-      title: 'Follow the plan',
-      items: [
-        {
-          id: 'plan',
-          label: 'Plan',
-          desc: 'This week, the trail, drills, and attendance',
-        },
-      ],
-    },
-    {
-      title: 'How it’s going',
-      items: [
-        {
-          id: 'progress',
-          label: 'How they are doing',
-          desc: 'Level since joining, skills, and goals',
-        },
-      ],
-    },
-    {
-      title: 'Records',
-      items: [
-        {
-          id: 'diary',
-          label: 'Diary & updates',
-          desc: 'Notes, coach updates, matches and clips',
-        },
-      ],
-    },
+    { items: [{ id: 'overview', label: 'Overview' }] },
+    { items: [{ id: 'plan', label: 'Plan' }] },
+    { items: [{ id: 'progress', label: 'How they are doing' }] },
+    { items: [{ id: 'diary', label: 'Diary & updates' }] },
   ]
 
   function panel() {
@@ -215,33 +164,10 @@ export default function PlayerDashboard() {
     }
   }
 
-  const isOverview = view === 'overview'
-
   return (
-    <div className={`player-view${isOverview ? '' : ' with-side'}`}>
-      <PlayerNav
-        groups={groups}
-        value={view}
-        onChange={setView}
-        mode={isOverview ? 'drawer' : 'sidebar'}
-      />
-      <div className="player-panel">
-        {panel()}
-        {NEXT_LINKS[view] && (
-          <nav className="next-links" aria-label="Related screens">
-            {NEXT_LINKS[view].map((link) => (
-              <button
-                key={link.id}
-                type="button"
-                className="next-links-btn"
-                onClick={() => setView(link.id)}
-              >
-                {link.label}
-              </button>
-            ))}
-          </nav>
-        )}
-      </div>
+    <div className="player-view with-side">
+      <PlayerNav groups={groups} value={view} onChange={setView} />
+      <div className="player-panel">{panel()}</div>
     </div>
   )
 }

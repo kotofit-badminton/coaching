@@ -47,12 +47,6 @@ export default function PlayerOverview({ player, journey, onboarding, onNavigate
             <button type="button" className="player-hero-btn primary" onClick={() => onNavigate?.('plan')}>
               See the plan
             </button>
-            <button type="button" className="player-hero-btn" onClick={() => onNavigate?.('progress')}>
-              See progress
-            </button>
-            <button type="button" className="player-hero-btn" onClick={() => onNavigate?.('diary')}>
-              See records
-            </button>
           </div>
         </div>
       </div>
@@ -82,15 +76,6 @@ export default function PlayerOverview({ player, journey, onboarding, onNavigate
             <span className="review-stat-sub">/5</span>
           </span>
           <span className="review-stat-label">Aiming for</span>
-        </div>
-      </div>
-
-      <div className="jrny-projection-progress">
-        <div className="progress-track">
-          <div className="progress-fill" style={{ width: `${pct}%` }} />
-        </div>
-        <div className="progress-label">
-          {done} of {totalClasses} classes · {pct}% there
         </div>
       </div>
 

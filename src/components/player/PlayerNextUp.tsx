@@ -67,7 +67,10 @@ export default function PlayerNextUp({ journey, band }: Props) {
           <span className="player-nextup-checkpoint-eyebrow">Next goal</span>
           <span className="player-nextup-checkpoint-label">{next.label}</span>
           <span className="player-nextup-checkpoint-at">
-            about {Math.max(0, next.atClass - journey.classesCompleted)} classes to go
+            {(() => {
+              const left = Math.max(0, next.atClass - journey.classesCompleted)
+              return `about ${left} ${left === 1 ? 'class' : 'classes'} to go`
+            })()}
           </span>
         </div>
       )}

@@ -1,5 +1,5 @@
 import type { Journey, Player } from '../../types'
-import { lastBlockDelta, nextCheckpoint, skillGaps } from '../../data/journeyDerive'
+import { lastBlockDelta, skillGaps } from '../../data/journeyDerive'
 import Section from '../Section'
 
 interface Props {
@@ -29,7 +29,6 @@ const PLAIN_FOCUS: Record<string, string> = {
 export default function PlayerBlockReview({ player, journey }: Props) {
   const delta = lastBlockDelta(journey)
   const topGap = skillGaps(journey)[0]
-  const next = nextCheckpoint(journey)
 
   const change =
     delta == null || delta === 0
@@ -48,12 +47,6 @@ export default function PlayerBlockReview({ player, journey }: Props) {
           <>
             {' '}
             Next, they are working on <strong>{focus}</strong>.
-          </>
-        )}
-        {next && (
-          <>
-            {' '}
-            The next milestone is <strong>{next.label.toLowerCase()}</strong>.
           </>
         )}
       </p>

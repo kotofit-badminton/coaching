@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom'
 import { useStore } from '../../data/store'
 import { ageGroupLabel, getBandDefinition, metricLabel } from '../../data/definitions'
 import { objectiveLabels } from '../../data/journeyTemplates'
+import { today } from '../../utils/format'
 
-const TODAY = '2026-08-30'
+const TODAY = today()
 
 interface Props {
   /** When set, the form logs against this player and hides the player picker. */

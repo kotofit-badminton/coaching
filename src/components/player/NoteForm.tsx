@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import type { NoteAuthor } from '../../types'
 import { useStore } from '../../data/store'
+import { today } from '../../utils/format'
 
-const TODAY = '2026-08-30'
+const TODAY = today()
 
 interface Props {
   playerId: string

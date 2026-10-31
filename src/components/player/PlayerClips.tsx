@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import type { Clip } from '../../types'
 import { useStore } from '../../data/store'
-import { formatDate } from '../../utils/format'
+import { formatDate, today } from '../../utils/format'
 
-const TODAY = '2026-08-30'
+const TODAY = today()
 
 interface Props {
   playerId: string

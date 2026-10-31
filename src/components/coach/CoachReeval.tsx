@@ -4,9 +4,10 @@ import type { Objective } from '../../types'
 import { useStore } from '../../data/store'
 import { getBandDefinition } from '../../data/definitions'
 import { objectiveBlurbs, objectiveLabels } from '../../data/journeyTemplates'
+import { today } from '../../utils/format'
 
 const OBJECTIVES: Objective[] = ['fun', 'fitness', 'competitive']
-const TODAY = '2026-08-30'
+const TODAY = today()
 
 interface Props {
   playerId: string

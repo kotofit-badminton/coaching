@@ -4,6 +4,7 @@ import { useStore } from '../../data/store'
 import { ageGroupLabel, bandForAge } from '../../data/definitions'
 import { generateJourney } from '../../data/generateJourney'
 import { supabase, supabaseConfigured } from '../../lib/supabase'
+import { today } from '../../utils/format'
 import {
   ageFromBandAnswer,
   evaluateQuiz,
@@ -12,7 +13,7 @@ import {
 } from '../../data/onboardingQuiz'
 import JourneyView from '../journey/JourneyView'
 
-const TODAY = '2026-08-30'
+const TODAY = today()
 // Only two journeys are offered at sign-up, picked by age, not chosen by the
 // family. The 3x/week 'competitive' objective and the old 3-way picker are
 // disabled here but the data model and journey templates still support them.

@@ -1,27 +1,38 @@
-import type { Journey } from '../../types'
-import { levelWord } from '../../data/definitions'
-import { GENERAL_SKILLS, STROKES } from '../../data/strokes'
+import type { Band, Journey } from '../../types'
+import { levelWord, metricDef } from '../../data/definitions'
+import { GENERAL_SKILLS, GROUP_LABELS, STROKES, type SkillGroup } from '../../data/strokes'
 import Section from '../Section'
 
 interface Props {
   journey: Journey
+  band: Band
 }
 
-// Physical skills sit under "Body". Everything else general sits under "Shots".
-const BODY_SKILLS = ['stamina', 'footwork', 'speed', 'power']
-
 function levelOf(journey: Journey, metricKeys: string[]): number | null {
+  if (metricKeys.length === 0) return null
   const target = journey.skillTargets.find((t) => metricKeys.includes(t.metricKey))
   return target ? target.current : null
 }
 
-function Level({ value }: { value: number | null }) {
+function Level({ value, metricKeys, band }: { value: number | null; metricKeys: string[]; band: Band }) {
   const filled = value == null ? 0 : Math.round(value)
+  const def = metricKeys.length > 0 ? metricDef(band, metricKeys[0]) : undefined
   return (
     <div className="stroke-level">
-      <span className="stroke-dots" aria-hidden="true">
+      <span className="stroke-dots">
         {[1, 2, 3, 4, 5].map((i) => (
-          <span key={i} className={`stroke-dot${i <= filled ? ' on' : ''}`} />
+          <span
+            key={i}
+            tabIndex={def ? 0 : -1}
+            className={`stroke-dot${i <= filled ? ' on' : ''}`}
+          >
+            {def && (
+              <span className="stroke-dot-tip" role="tooltip">
+                <strong>Level {i}</strong>
+                {def.anchors[i as 1 | 2 | 3 | 4 | 5]}
+              </span>
+            )}
+          </span>
         ))}
       </span>
       <span>{value == null ? 'Not measured yet' : levelWord(value)}</span>
@@ -29,11 +40,11 @@ function Level({ value }: { value: number | null }) {
   )
 }
 
-export default function StrokeCards({ journey }: Props) {
+const GROUP_ORDER: SkillGroup[] = ['shots', 'movement', 'fitness', 'game', 'mindset']
+
+export default function StrokeCards({ journey, band }: Props) {
   const skills = GENERAL_SKILLS.map((s) => ({ ...s, value: levelOf(journey, s.metricKeys) }))
   const bySkill = new Map(skills.map((s) => [s.id, s]))
-  const shotSkills = skills.filter((s) => !BODY_SKILLS.includes(s.id))
-  const bodySkills = skills.filter((s) => BODY_SKILLS.includes(s.id))
 
   return (
     <>
@@ -53,36 +64,50 @@ export default function StrokeCards({ journey }: Props) {
                 <div className="stroke-body">
                   <h3 className="stroke-name">{stroke.name}</h3>
                   <p className="stroke-what">{stroke.what}</p>
-                  <Level value={skill?.value ?? null} />
+                  <Level value={skill?.value ?? null} metricKeys={skill?.metricKeys ?? []} band={band} />
                 </div>
               </article>
             )
           })}
         </div>
         <div className="stroke-grid stroke-grid-small">
-          {shotSkills.map((skill) => (
-            <article className="stroke-card" key={skill.id}>
-              <div className="stroke-body">
-                <h3 className="stroke-name">{skill.name}</h3>
-                <Level value={skill.value} />
-              </div>
-            </article>
-          ))}
+          {skills
+            .filter((s) => s.group === 'shots')
+            .map((skill) => (
+              <article className="stroke-card" key={skill.id}>
+                {skill.image && (
+                  <img className="stroke-img" src={skill.image} alt={skill.name} loading="lazy" />
+                )}
+                <div className="stroke-body">
+                  <h3 className="stroke-name">{skill.name}</h3>
+                  <Level value={skill.value} metricKeys={skill.metricKeys} band={band} />
+                </div>
+              </article>
+            ))}
         </div>
       </Section>
 
-      <Section title="Body">
-        <div className="stroke-grid stroke-grid-small">
-          {bodySkills.map((skill) => (
-            <article className="stroke-card" key={skill.id}>
-              <div className="stroke-body">
-                <h3 className="stroke-name">{skill.name}</h3>
-                <Level value={skill.value} />
-              </div>
-            </article>
-          ))}
-        </div>
-      </Section>
+      {GROUP_ORDER.filter((g) => g !== 'shots').map((group) => {
+        const items = skills.filter((s) => s.group === group)
+        if (items.length === 0) return null
+        return (
+          <Section title={GROUP_LABELS[group]} key={group}>
+            <div className="stroke-grid stroke-grid-small">
+              {items.map((skill) => (
+                <article className="stroke-card" key={skill.id}>
+                  {skill.image && (
+                    <img className="stroke-img" src={skill.image} alt={skill.name} loading="lazy" />
+                  )}
+                  <div className="stroke-body">
+                    <h3 className="stroke-name">{skill.name}</h3>
+                    <Level value={skill.value} metricKeys={skill.metricKeys} band={band} />
+                  </div>
+                </article>
+              ))}
+            </div>
+          </Section>
+        )
+      })}
     </>
   )
 }

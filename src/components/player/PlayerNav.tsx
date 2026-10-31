@@ -31,10 +31,11 @@ function List({
       {groups.map((group, gi) => {
         const key = group.title ?? String(gi)
         const hasActive = group.items.some((item) => item.id === value)
-        const open = group.title ? (expanded[key] ?? hasActive) : true
+        const showTitle = Boolean(group.title) && group.items.length > 1
+        const open = showTitle ? (expanded[key] ?? hasActive) : true
         return (
           <div className={`player-nav-group${open ? '' : ' collapsed'}`} key={key}>
-            {group.title && (
+            {showTitle && (
               <button
                 type="button"
                 className="player-nav-group-title"

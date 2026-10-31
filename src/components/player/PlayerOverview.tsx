@@ -50,6 +50,9 @@ export default function PlayerOverview({ player, journey, onboarding, onNavigate
             <button type="button" className="player-hero-btn" onClick={() => onNavigate?.('progress')}>
               See progress
             </button>
+            <button type="button" className="player-hero-btn" onClick={() => onNavigate?.('diary')}>
+              See records
+            </button>
           </div>
         </div>
       </div>

@@ -7,6 +7,9 @@ import AdminPage from './components/admin/AdminPage'
 import CoachPortal from './components/coach/CoachPortal'
 import RegisterFlow from './components/register/RegisterFlow'
 import LoginPage from './components/auth/LoginPage'
+import StaffSignup from './components/auth/StaffSignup'
+import ForgotPasswordPage from './components/auth/ForgotPasswordPage'
+import ResetPasswordPage from './components/auth/ResetPasswordPage'
 import RoleGate from './components/auth/RoleGate'
 
 function PlayerRoute() {
@@ -29,8 +32,11 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/register" element={<RegisterFlow />} />
           <Route path="/signup" element={<RegisterFlow withAccount />} />
+          <Route path="/signup/staff" element={<StaffSignup />} />
           <Route path="/players" element={<PlayerPicker />} />
           <Route path="/player/:playerId" element={<PlayerRoute />} />
           <Route

@@ -57,13 +57,11 @@ export default function JourneyMap({ journey, band, subjectName = 'They' }: Prop
   const [selected, setSelected] = useState<number | null>(currentWeek)
 
   const isPhone = useIsPhone()
-  // Phones: one week per row, winding down. Larger screens: two snaking rows, scrolled sideways.
-  const rowH = isPhone ? 15 : 30
-  const cols = isPhone ? 1 : Math.ceil(total / 2)
-  const colW = 11
-  const scale = 5
-  const vbW = isPhone ? 100 : cols * colW + 12
-  const vbH = isPhone ? total * rowH + 14 : 64
+  // Phones: vertical winding trail. Larger screens: the same wave turned sideways, one row.
+  const rowH = 15
+  const stepU = 13
+  const vbW = isPhone ? 100 : Math.max(100, 8 + (total - 1) * stepU + 12)
+  const vbH = isPhone ? total * rowH + 14 : 80
 
   const pos = useMemo<Pt[]>(() => {
     if (isPhone) {
@@ -72,15 +70,11 @@ export default function JourneyMap({ journey, band, subjectName = 'They' }: Prop
         y: 10 + i * rowH,
       }))
     }
-    return weeks.map((_, i) => {
-      const row = Math.floor(i / cols)
-      const c = i % cols
-      const col = row % 2 === 0 ? c : cols - 1 - c
-      // gentle drift along each row, like the original trail
-      const drift = Math.sin((col + 0.5) * 0.9) * 4
-      return { x: 8 + col * colW, y: 18 + row * rowH + drift }
-    })
-  }, [weeks, isPhone, rowH, cols])
+    return weeks.map((_, i) => ({
+      x: 8 + i * stepU,
+      y: 40 + Math.sin((i + 0.5) * 0.9) * 22,
+    }))
+  }, [weeks, isPhone, rowH])
 
   const phases = journey.phases ?? []
   const checkpointByWeek = new Map((journey.checkpoints ?? []).map((c) => [c.atWeek, c]))
@@ -172,7 +166,7 @@ export default function JourneyMap({ journey, band, subjectName = 'They' }: Prop
       >
         <div
           className="jmap-canvas"
-          style={isPhone ? undefined : { width: vbW * scale, maxWidth: 'none' }}
+          style={isPhone ? undefined : { width: vbW * 5.6, maxWidth: 'none' }}
         >
           {selected != null && (
             <button

@@ -20,6 +20,7 @@ export default function SkillTargets({ journey, band }: Props) {
           const span = Math.max(0.1, t.target - t.baseline)
           const donePct = Math.min(100, Math.max(0, Math.round(((t.current - t.baseline) / span) * 100)))
           const reached = t.current >= t.target
+          const reachedAtStart = reached && journey.classesCompleted === 0
           return (
             <div className="skill-target-row" key={t.metricKey}>
               <div className="skill-target-top">
@@ -32,7 +33,13 @@ export default function SkillTargets({ journey, band }: Props) {
                   style={{ width: `${donePct}%` }}
                 />
               </div>
-              {reached && <div className="skill-target-meta"><span className="skill-target-reached">Goal reached</span></div>}
+              {reached && (
+                <div className="skill-target-meta">
+                  <span className="skill-target-reached">
+                    {reachedAtStart ? 'Already at this level to start' : 'Goal reached'}
+                  </span>
+                </div>
+              )}
             </div>
           )
         })}

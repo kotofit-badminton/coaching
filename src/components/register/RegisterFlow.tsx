@@ -15,7 +15,9 @@ import {
 import JourneyView from '../journey/JourneyView'
 
 const TODAY = '2026-08-30'
-const OBJECTIVES: Objective[] = ['fun', 'fitness', 'competitive']
+// The 3x/week competitive track is disabled for sign-up for now; the data
+// model, journey templates and scoring all still support it underneath.
+const VISIBLE_OBJECTIVES: Objective[] = ['fun', 'fitness']
 
 interface Props {
   /** Player-portal sign-up: also creates a Supabase account before the plan. */
@@ -52,7 +54,8 @@ export default function RegisterFlow({ withAccount = false }: Props) {
     () => (onResults ? evaluateQuiz(answers, band) : null),
     [onResults, answers, band],
   )
-  const suggested = result?.recommendedObjective ?? 'fun'
+  const rawSuggested = result?.recommendedObjective ?? 'fun'
+  const suggested = VISIBLE_OBJECTIVES.includes(rawSuggested) ? rawSuggested : 'fitness'
   const selectedObjective = chosen ?? suggested
 
   const previewJourney = useMemo(() => {
@@ -133,7 +136,7 @@ export default function RegisterFlow({ withAccount = false }: Props) {
   }
 
   const maxObjScore = result
-    ? Math.max(1, ...OBJECTIVES.map((o) => result.objectiveScores[o]))
+    ? Math.max(1, ...VISIBLE_OBJECTIVES.map((o) => result.objectiveScores[o]))
     : 1
 
   return (
@@ -213,7 +216,7 @@ export default function RegisterFlow({ withAccount = false }: Props) {
             </p>
 
             <div className="quiz-obj-scores">
-              {OBJECTIVES.map((o) => (
+              {VISIBLE_OBJECTIVES.map((o) => (
                 <div className="quiz-obj-score" key={o}>
                   <span className="quiz-obj-score-label">{objectiveLabels[o]}</span>
                   <div className="quiz-obj-score-track">
@@ -229,7 +232,7 @@ export default function RegisterFlow({ withAccount = false }: Props) {
             </div>
 
             <div className="quiz-obj-cards">
-              {OBJECTIVES.map((o) => (
+              {VISIBLE_OBJECTIVES.map((o) => (
                 <button
                   key={o}
                   type="button"
@@ -253,7 +256,7 @@ export default function RegisterFlow({ withAccount = false }: Props) {
               ) : (
                 <form className="auth-form quiz-account-form" onSubmit={createWithAccount}>
                   <p className="section-subtitle">
-                    Create your family account to save {name.trim() || 'this player'}'s plan
+                    Create your account to save {name.trim() || 'this player'}'s plan
                     and check in on it any time.
                   </p>
                   <label className="form-field">

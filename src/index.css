@@ -50,7 +50,7 @@
   --surface: oklch(100% 0 0);
   --surface-sunken: oklch(95% 0.008 270);
 
-  --text: #0b0b0b;
+  --text: oklch(18% 0.02 275);
   --text-secondary: oklch(32% 0.03 275);
   --text-muted: oklch(44% 0.03 275);
 
@@ -997,10 +997,8 @@ p {
 }
 
 .celebration-eyebrow {
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 12px;
+  font-weight: 700;
   color: var(--accent);
 }
 
@@ -1227,7 +1225,7 @@ p {
 .calendar-nav-btn {
   width: 28px;
   height: 28px;
-  border-radius: 7px;
+  border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
@@ -1280,7 +1278,7 @@ p {
   justify-content: center;
   gap: 2px;
   border: 1px solid transparent;
-  border-radius: 9px;
+  border-radius: 8px;
   background: none;
   font: inherit;
   color: var(--text);
@@ -1634,10 +1632,8 @@ p {
 }
 
 .next-session-eyebrow {
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 12px;
+  font-weight: 700;
   color: var(--accent);
   background: var(--accent-soft);
   padding: 3px 9px;
@@ -1724,7 +1720,7 @@ p {
   flex-shrink: 0;
   width: 22px;
   height: 22px;
-  border-radius: 7px;
+  border-radius: 8px;
   border: 2px solid var(--border);
   display: flex;
   align-items: center;
@@ -3410,10 +3406,8 @@ p {
 }
 
 .quiz-reco-eyebrow {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--text-muted);
 }
 
@@ -3646,10 +3640,8 @@ a.app-header-brand {
 }
 
 .landing-eyebrow {
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--accent);
 }
 
@@ -3974,10 +3966,8 @@ a.app-header-brand {
 }
 
 .player-nextup-checkpoint-eyebrow {
-  font-size: 10.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--text-muted);
 }
 
@@ -4648,10 +4638,8 @@ a.app-header-brand {
 }
 
 .jmap-achieve-eyebrow {
-  font-size: 10.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--gold);
 }
 
@@ -4992,7 +4980,7 @@ a.app-header-brand {
   justify-content: center;
   font-size: 11px;
   color: var(--text-muted);
-  border-radius: 7px;
+  border-radius: 8px;
 }
 
 .cal-cell.empty {

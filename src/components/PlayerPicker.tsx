@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom'
 import type { Objective } from '../types'
 import { useStore } from '../data/store'
 import { objectiveLabels } from '../data/journeyTemplates'
-import { ageGroupLabel } from '../data/definitions'
 import { currentJourneyRating, targetJourneyRating } from '../data/journeyDerive'
 
 const OBJECTIVES: Objective[] = ['fun', 'fitness', 'competitive']
@@ -49,9 +48,7 @@ export default function PlayerPicker() {
                     </span>
                     <span className="picker-card-body">
                       <span className="picker-card-name">{p.name}</span>
-                      <span className="picker-card-meta">
-                        Age {p.age} · {ageGroupLabel(p.band)}
-                      </span>
+                      <span className="picker-card-meta">Age {p.age}</span>
                       <span className="picker-card-rating">
                         Level {cur.toFixed(1)} <span className="picker-card-target">/ {tgt.toFixed(1)}</span>
                       </span>

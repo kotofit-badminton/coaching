@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { Objective } from '../../types'
 import { useStore } from '../../data/store'
 import { ageGroupLabel, bandForAge } from '../../data/definitions'
 import { generateJourney } from '../../data/generateJourney'
-import { objectiveBlurbs, objectiveLabels } from '../../data/journeyTemplates'
 import { supabase, supabaseConfigured } from '../../lib/supabase'
 import {
   ageFromBandAnswer,
@@ -15,9 +13,17 @@ import {
 import JourneyView from '../journey/JourneyView'
 
 const TODAY = '2026-08-30'
-// The 3x/week competitive track is disabled for sign-up for now; the data
-// model, journey templates and scoring all still support it underneath.
-const VISIBLE_OBJECTIVES: Objective[] = ['fun', 'fitness']
+// Only two journeys are offered at sign-up, picked by age, not chosen by the
+// family. The 3x/week 'competitive' objective and the old 3-way picker are
+// disabled here but the data model and journey templates still support them.
+const JOURNEY_LABELS: Record<'fun' | 'fitness', string> = {
+  fun: 'Fun / light compete',
+  fitness: 'Competitive',
+}
+
+function objectiveForAge(age: number): 'fun' | 'fitness' {
+  return age <= 7 ? 'fun' : 'fitness'
+}
 
 interface Props {
   /** Player-portal sign-up: also creates a Supabase account before the plan. */
@@ -31,7 +37,6 @@ export default function RegisterFlow({ withAccount = false }: Props) {
   const [name, setName] = useState('')
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [step, setStep] = useState(0) // 0 = name; 1..N = questions; N+1 = results
-  const [chosen, setChosen] = useState<Objective | null>(null)
 
   const [accountEmail, setAccountEmail] = useState('')
   const [accountPassword, setAccountPassword] = useState('')
@@ -54,9 +59,7 @@ export default function RegisterFlow({ withAccount = false }: Props) {
     () => (onResults ? evaluateQuiz(answers, band) : null),
     [onResults, answers, band],
   )
-  const rawSuggested = result?.recommendedObjective ?? 'fun'
-  const suggested = VISIBLE_OBJECTIVES.includes(rawSuggested) ? rawSuggested : 'fitness'
-  const selectedObjective = chosen ?? suggested
+  const assignedObjective = objectiveForAge(age)
 
   const previewJourney = useMemo(() => {
     if (!result) return null
@@ -64,13 +67,13 @@ export default function RegisterFlow({ withAccount = false }: Props) {
       {
         playerId: 'preview',
         band,
-        objective: selectedObjective,
+        objective: assignedObjective,
         baselineScores: result.baselineScores,
         date: TODAY,
       },
       { id: 'jr-preview-register' },
     )
-  }, [result, band, selectedObjective])
+  }, [result, band, assignedObjective])
 
   function setAnswer(qid: string, oid: string) {
     setAnswers((a) => {
@@ -97,9 +100,9 @@ export default function RegisterFlow({ withAccount = false }: Props) {
     const id = onboardPlayer({
       name: name.trim(),
       age,
-      objective: selectedObjective,
+      objective: assignedObjective,
       baselineScores: result!.baselineScores,
-      notes: summariseAnswers(answers, suggested, selectedObjective),
+      notes: summariseAnswers(answers, assignedObjective, assignedObjective),
       quizAnswers: answers,
       date: TODAY,
     })
@@ -135,10 +138,6 @@ export default function RegisterFlow({ withAccount = false }: Props) {
     )
   }
 
-  const maxObjScore = result
-    ? Math.max(1, ...VISIBLE_OBJECTIVES.map((o) => result.objectiveScores[o]))
-    : 1
-
   return (
     <div className="quiz">
       <div className="quiz-progress">
@@ -151,7 +150,7 @@ export default function RegisterFlow({ withAccount = false }: Props) {
           />
         </div>
         <span className="quiz-progress-label">
-          {onResults ? 'Your suggested plan' : `Question ${step + 1} of ${totalSteps + 1}`}
+          {onResults ? 'Your plan' : `Question ${step + 1} of ${totalSteps + 1}`}
         </span>
       </div>
 
@@ -205,50 +204,15 @@ export default function RegisterFlow({ withAccount = false }: Props) {
         <div className="quiz-result">
           <section className="card quiz-card">
             <div className="quiz-reco-banner">
-              <span className="quiz-reco-eyebrow">From your answers, we'd suggest</span>
-              <span className={`jrny-objective-pill obj-${suggested}`}>
-                {objectiveLabels[suggested]}
+              <span className="quiz-reco-eyebrow">Based on age, {name.trim() || 'this player'}'s plan is</span>
+              <span className={`jrny-objective-pill obj-${assignedObjective}`}>
+                {JOURNEY_LABELS[assignedObjective]}
               </span>
             </div>
             <p className="section-subtitle">
-              Pick the plan to start with — the player follows one at a time. A coach can
-              switch it later.
+              Ages 5–7 follow the Fun / light compete plan, ages 8 and up follow Competitive. A
+              coach can switch it later if needed.
             </p>
-
-            <div className="quiz-obj-scores">
-              {VISIBLE_OBJECTIVES.map((o) => (
-                <div className="quiz-obj-score" key={o}>
-                  <span className="quiz-obj-score-label">{objectiveLabels[o]}</span>
-                  <div className="quiz-obj-score-track">
-                    <div
-                      className={`quiz-obj-score-fill obj-fill-${o}`}
-                      style={{
-                        width: `${Math.round((result.objectiveScores[o] / maxObjScore) * 100)}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="quiz-obj-cards">
-              {VISIBLE_OBJECTIVES.map((o) => (
-                <button
-                  key={o}
-                  type="button"
-                  className={`quiz-obj-card obj-${o}${
-                    selectedObjective === o ? ' selected' : ''
-                  }${suggested === o ? ' suggested' : ''}`}
-                  onClick={() => setChosen(o)}
-                >
-                  <span className="quiz-obj-card-title">
-                    {objectiveLabels[o]}
-                    {suggested === o && <span className="quiz-obj-card-tag"> suggested</span>}
-                  </span>
-                  <span className="quiz-obj-card-blurb">{objectiveBlurbs[o]}</span>
-                </button>
-              ))}
-            </div>
 
             {withAccount ? (
               accountNotice ? (
@@ -286,20 +250,20 @@ export default function RegisterFlow({ withAccount = false }: Props) {
                   <button type="submit" className="form-submit quiz-create" disabled={accountBusy}>
                     {accountBusy
                       ? 'Please wait…'
-                      : `Create account & start ${objectiveLabels[selectedObjective]} plan`}
+                      : `Create account & start ${JOURNEY_LABELS[assignedObjective]} plan`}
                   </button>
                 </form>
               )
             ) : (
               <button type="button" className="form-submit quiz-create" onClick={create}>
-                Start {name.trim() || 'this player'}'s {objectiveLabels[selectedObjective]} plan
+                Start {name.trim() || 'this player'}'s {JOURNEY_LABELS[assignedObjective]} plan
               </button>
             )}
           </section>
 
           <div>
             <div className="admin-preview-banner">
-              Preview — {objectiveLabels[selectedObjective]} plan, {ageGroupLabel(band)}
+              Preview — {JOURNEY_LABELS[assignedObjective]} plan, {ageGroupLabel(band)}
             </div>
             <JourneyView
               journey={previewJourney}

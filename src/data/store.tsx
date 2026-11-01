@@ -23,10 +23,33 @@ import { seedClips } from './clips'
 import { matches as seedMatches } from './matches'
 import { rosterJourneys, rosterOnboarding, rosterPlayers } from './roster'
 import { sessionNotes as seedSessionNotes } from './sessionNotes'
+import { supabase, supabaseConfigured } from '../lib/supabase'
+import {
+  fetchOwnBundle,
+  fetchStaffBundle,
+  getAuthInfo,
+  pushClass,
+  pushClip,
+  pushJourney,
+  pushMatch,
+  pushNewPlayer,
+  pushNote,
+  pushOnboarding,
+  pushPlayer,
+  readPendingPlayer,
+  clearPendingPlayer,
+  queuePendingPlayer,
+  type RealBundle,
+} from './cloudSync'
 
 const STORAGE_KEY = 'kotofit-store'
 // Bump when the journey/store shape changes so stale saved state is discarded.
 const STORAGE_VERSION = 4
+
+// Seed/demo players stay local-only forever. Anything else is a real player
+// backed by Supabase once a signed-in session is available.
+const MOCK_IDS = new Set(rosterPlayers.map((p) => p.id))
+const isRealPlayer = (id: string) => !MOCK_IDS.has(id)
 
 export type ActiveProfile =
   | { kind: 'player'; playerId: string }
@@ -86,6 +109,26 @@ function slugify(name: string): string {
     .replace(/^-|-$/g, '')
 }
 
+function mergeById<T extends { id: string }>(base: T[], incoming: T[]): T[] {
+  if (incoming.length === 0) return base
+  const byId = new Map(base.map((item) => [item.id, item]))
+  for (const item of incoming) byId.set(item.id, item)
+  return Array.from(byId.values())
+}
+
+function mergeBundle(s: StoreState, bundle: RealBundle, classes?: CoachingClass[]): StoreState {
+  return {
+    ...s,
+    players: mergeById(s.players, bundle.players),
+    onboarding: mergeById(s.onboarding, bundle.onboarding),
+    journeys: mergeById(s.journeys, bundle.journeys),
+    sessionNotes: mergeById(s.sessionNotes, bundle.sessionNotes),
+    matches: mergeById(s.matches, bundle.matches),
+    clips: mergeById(s.clips, bundle.clips),
+    classes: classes ? mergeById(s.classes, classes) : s.classes,
+  }
+}
+
 export interface OnboardInput {
   name: string
   age: number
@@ -103,11 +146,18 @@ export interface ProgressInput {
   date: string // ISO
 }
 
+export interface NewPlayerBundle {
+  id: string
+  player: Player
+  onboarding: OnboardingEvaluation
+  journey: Journey
+}
+
 interface StoreValue extends StoreState {
   getPlayer: (id: string) => Player | undefined
   getJourney: (playerId: string) => Journey | undefined
   getOnboarding: (playerId: string) => OnboardingEvaluation | undefined
-  onboardPlayer: (input: OnboardInput) => string // returns new player id
+  onboardPlayer: (input: OnboardInput) => NewPlayerBundle
   reevaluatePlayer: (
     playerId: string,
     patch: { objective?: Objective; baselineScores?: Record<string, number>; notes?: string; coachName?: string; date?: string },
@@ -125,6 +175,8 @@ interface StoreValue extends StoreState {
   signInAsAdmin: () => void
   signOut: () => void
   resetStore: () => void
+  /** Queue a just-registered real player for cloud sync on first confirmed sign-in. */
+  queueForCloudSync: (bundle: NewPlayerBundle) => void
 }
 
 const StoreContext = createContext<StoreValue | null>(null)
@@ -138,6 +190,47 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     persist(state)
   }, [state])
 
+  // Pull in real (non-mock) data from Supabase once a session is available,
+  // and attach any player that was registered before email confirmation.
+  useEffect(() => {
+    if (!supabaseConfigured) return
+    let alive = true
+
+    async function sync() {
+      const auth = await getAuthInfo()
+      if (!alive || !auth) return
+
+      if (auth.role === 'player' && !auth.playerId) {
+        const pending = readPendingPlayer()
+        if (pending) {
+          try {
+            await pushNewPlayer(pending.player, pending.onboarding, pending.journey)
+            clearPendingPlayer()
+            auth.playerId = pending.player.id
+          } catch {
+            /* still pending — retried on next sign-in */
+          }
+        }
+      }
+
+      if (auth.role === 'player') {
+        if (!auth.playerId) return
+        const bundle = await fetchOwnBundle(auth.playerId)
+        if (alive) setState((s) => mergeBundle(s, bundle))
+      } else {
+        const { classes, ...bundle } = await fetchStaffBundle()
+        if (alive) setState((s) => mergeBundle(s, bundle, classes))
+      }
+    }
+
+    sync()
+    const { data: sub } = supabase.auth.onAuthStateChange(() => sync())
+    return () => {
+      alive = false
+      sub.subscription.unsubscribe()
+    }
+  }, [])
+
   const value = useMemo<StoreValue>(() => {
     const getPlayer = (id: string) => state.players.find((p) => p.id === id)
     const getJourney = (playerId: string) =>
@@ -145,7 +238,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const getOnboarding = (playerId: string) =>
       state.onboarding.find((o) => o.playerId === playerId)
 
-    const onboardPlayer = (input: OnboardInput) => {
+    const onboardPlayer: StoreValue['onboardPlayer'] = (input) => {
       const band = bandForAge(input.age)
       const id = `p-${slugify(input.name)}-${Math.random().toString(36).slice(2, 6)}`
       const player: Player = {
@@ -175,65 +268,70 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         onboarding: [...s.onboarding, onboarding],
         journeys: [...s.journeys, journey],
       }))
-      return id
+      return { id, player, onboarding, journey }
     }
 
     const reevaluatePlayer: StoreValue['reevaluatePlayer'] = (playerId, patch) => {
-      setState((s) => {
-        const prevEval = s.onboarding.find((o) => o.playerId === playerId)
-        const player = s.players.find((p) => p.id === playerId)
-        if (!prevEval || !player) return s
-        const nextEval: OnboardingEvaluation = {
-          ...prevEval,
-          objective: patch.objective ?? prevEval.objective,
-          baselineScores: patch.baselineScores ?? prevEval.baselineScores,
-          notes: patch.notes ?? prevEval.notes,
-          coachName: patch.coachName ?? prevEval.coachName,
-          date: patch.date ?? prevEval.date,
-        }
-        const prevJourney = s.journeys.find((j) => j.playerId === playerId)
-        let nextJourney = generateJourney(nextEval, {
-          id: prevJourney?.id ?? `jr-${playerId}`,
-        })
-        // carry the logged progress across the regeneration
-        for (const entry of prevJourney?.progressLog ?? []) {
-          nextJourney = addProgressEntry(nextJourney, entry)
-        }
-        return {
-          ...s,
-          players: s.players.map((p) =>
-            p.id === playerId ? { ...p, objective: nextEval.objective } : p,
-          ),
-          onboarding: s.onboarding.map((o) => (o.playerId === playerId ? nextEval : o)),
-          journeys: s.journeys.map((j) => (j.playerId === playerId ? nextJourney : j)),
-        }
+      const prevEval = state.onboarding.find((o) => o.playerId === playerId)
+      const player = state.players.find((p) => p.id === playerId)
+      if (!prevEval || !player) return
+      const nextEval: OnboardingEvaluation = {
+        ...prevEval,
+        objective: patch.objective ?? prevEval.objective,
+        baselineScores: patch.baselineScores ?? prevEval.baselineScores,
+        notes: patch.notes ?? prevEval.notes,
+        coachName: patch.coachName ?? prevEval.coachName,
+        date: patch.date ?? prevEval.date,
+      }
+      const prevJourney = state.journeys.find((j) => j.playerId === playerId)
+      let nextJourney = generateJourney(nextEval, {
+        id: prevJourney?.id ?? `jr-${playerId}`,
       })
+      // carry the logged progress across the regeneration
+      for (const entry of prevJourney?.progressLog ?? []) {
+        nextJourney = addProgressEntry(nextJourney, entry)
+      }
+      setState((s) => ({
+        ...s,
+        players: s.players.map((p) =>
+          p.id === playerId ? { ...p, objective: nextEval.objective } : p,
+        ),
+        onboarding: s.onboarding.map((o) => (o.playerId === playerId ? nextEval : o)),
+        journeys: s.journeys.map((j) => (j.playerId === playerId ? nextJourney : j)),
+      }))
+      if (supabaseConfigured && isRealPlayer(playerId)) {
+        const nextPlayer = { ...player, objective: nextEval.objective }
+        pushPlayer(nextPlayer).catch(() => {})
+        pushOnboarding(nextEval).catch(() => {})
+        pushJourney(nextJourney).catch(() => {})
+      }
     }
 
     const logJourneyProgress: StoreValue['logJourneyProgress'] = (playerId, input) => {
+      const journey = state.journeys.find((j) => j.playerId === playerId)
+      if (!journey) return
+      const nextJourney = addProgressEntry(journey, {
+        id: `jp-${playerId}-${journey.progressLog.length + 1}-${Date.now().toString(36)}`,
+        date: input.date,
+        classesCompleted: input.classesCompleted,
+        scores: input.scores,
+        coachNote: input.coachNote,
+      })
       setState((s) => ({
         ...s,
-        journeys: s.journeys.map((j) => {
-          if (j.playerId !== playerId) return j
-          return addProgressEntry(j, {
-            id: `jp-${playerId}-${j.progressLog.length + 1}-${Date.now().toString(36)}`,
-            date: input.date,
-            classesCompleted: input.classesCompleted,
-            scores: input.scores,
-            coachNote: input.coachNote,
-          })
-        }),
+        journeys: s.journeys.map((j) => (j.playerId === playerId ? nextJourney : j)),
       }))
+      if (supabaseConfigured && isRealPlayer(playerId)) {
+        pushJourney(nextJourney).catch(() => {})
+      }
     }
 
     const addSessionNote: StoreValue['addSessionNote'] = (note) => {
-      setState((s) => ({
-        ...s,
-        sessionNotes: [
-          ...s.sessionNotes,
-          { ...note, id: `sn-${Date.now().toString(36)}` },
-        ],
-      }))
+      const full: SessionNote = { ...note, id: `sn-${Date.now().toString(36)}` }
+      setState((s) => ({ ...s, sessionNotes: [...s.sessionNotes, full] }))
+      if (supabaseConfigured && isRealPlayer(full.playerId)) {
+        pushNote(full).catch(() => {})
+      }
     }
 
     const getMatches: StoreValue['getMatches'] = (playerId) =>
@@ -242,10 +340,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         .sort((a, b) => (a.date < b.date ? 1 : -1))
 
     const addMatch: StoreValue['addMatch'] = (match) => {
-      setState((s) => ({
-        ...s,
-        matches: [...s.matches, { ...match, id: `match-${Date.now().toString(36)}` }],
-      }))
+      const full: Match = { ...match, id: `match-${Date.now().toString(36)}` }
+      setState((s) => ({ ...s, matches: [...s.matches, full] }))
+      if (supabaseConfigured && isRealPlayer(full.playerId)) {
+        pushMatch(full).catch(() => {})
+      }
     }
 
     const getClips: StoreValue['getClips'] = (playerId) =>
@@ -254,23 +353,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         .sort((a, b) => (a.date < b.date ? 1 : -1))
 
     const addClip: StoreValue['addClip'] = (clip) => {
-      setState((s) => ({
-        ...s,
-        clips: [...s.clips, { ...clip, id: `clip-${Date.now().toString(36)}` }],
-      }))
+      const full: Clip = { ...clip, id: `clip-${Date.now().toString(36)}` }
+      setState((s) => ({ ...s, clips: [...s.clips, full] }))
+      if (supabaseConfigured && isRealPlayer(full.playerId)) {
+        pushClip(full).catch(() => {})
+      }
     }
 
     const createClass: StoreValue['createClass'] = (cls) => {
       const id = `cls-${slugify(cls.name)}-${Math.random().toString(36).slice(2, 5)}`
-      setState((s) => ({ ...s, classes: [...s.classes, { ...cls, id }] }))
+      const full: CoachingClass = { ...cls, id }
+      setState((s) => ({ ...s, classes: [...s.classes, full] }))
+      if (supabaseConfigured) pushClass(full).catch(() => {})
       return id
     }
 
     const setClassMembers: StoreValue['setClassMembers'] = (classId, memberIds) => {
+      const cls = state.classes.find((c) => c.id === classId)
+      if (!cls) return
+      const full = { ...cls, memberIds }
       setState((s) => ({
         ...s,
-        classes: s.classes.map((c) => (c.id === classId ? { ...c, memberIds } : c)),
+        classes: s.classes.map((c) => (c.id === classId ? full : c)),
       }))
+      if (supabaseConfigured) pushClass(full).catch(() => {})
+    }
+
+    const queueForCloudSync: StoreValue['queueForCloudSync'] = (bundle) => {
+      queuePendingPlayer(bundle)
     }
 
     const signInAsPlayer: StoreValue['signInAsPlayer'] = (playerId) => {
@@ -321,6 +431,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addClip,
       createClass,
       setClassMembers,
+      queueForCloudSync,
       signInAsPlayer,
       signInAsCoach,
       signInAsAdmin,

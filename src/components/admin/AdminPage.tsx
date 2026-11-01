@@ -3,15 +3,17 @@ import { Link } from 'react-router-dom'
 import ObjectiveGroups, { type ClassPrefill } from './ObjectiveGroups'
 import RegisterFlow from '../register/RegisterFlow'
 import Classes from './Classes'
+import StaffRoles from './StaffRoles'
 import SupportingDashboard from '../SupportingDashboard'
 import { useStore } from '../../data/store'
 
-type Tab = 'roster' | 'register' | 'classes' | 'sample'
+type Tab = 'roster' | 'register' | 'classes' | 'staff' | 'sample'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'roster', label: 'Roster by objective' },
   { id: 'register', label: 'Register a player' },
   { id: 'classes', label: 'Classes' },
+  { id: 'staff', label: 'Staff access' },
   { id: 'sample', label: 'Sample history (Vikram)' },
 ]
 
@@ -58,6 +60,7 @@ export default function AdminPage() {
       {tab === 'classes' && (
         <Classes prefill={prefill} onConsumePrefill={() => setPrefill(null)} />
       )}
+      {tab === 'staff' && <StaffRoles />}
       {tab === 'sample' && (
         <div className="admin-sample-history">
           <p className="section-subtitle">

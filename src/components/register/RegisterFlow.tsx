@@ -32,7 +32,7 @@ interface Props {
 }
 
 export default function RegisterFlow({ withAccount = false }: Props) {
-  const { onboardPlayer, signInAsPlayer } = useStore()
+  const { onboardPlayer, signInAsPlayer, queueForCloudSync } = useStore()
   const navigate = useNavigate()
 
   const [name, setName] = useState('')
@@ -98,7 +98,7 @@ export default function RegisterFlow({ withAccount = false }: Props) {
         : true
 
   function createLocalPlayer() {
-    const id = onboardPlayer({
+    const bundle = onboardPlayer({
       name: name.trim(),
       age,
       objective: assignedObjective,
@@ -107,13 +107,13 @@ export default function RegisterFlow({ withAccount = false }: Props) {
       quizAnswers: answers,
       date: TODAY,
     })
-    signInAsPlayer(id)
-    return id
+    signInAsPlayer(bundle.id)
+    return bundle
   }
 
   function create() {
     if (!result) return
-    const id = createLocalPlayer()
+    const { id } = createLocalPlayer()
     navigate(`/player/${id}`)
   }
 
@@ -133,7 +133,10 @@ export default function RegisterFlow({ withAccount = false }: Props) {
       setAccountError(err.message)
       return
     }
-    createLocalPlayer()
+    const bundle = createLocalPlayer()
+    // Synced to Supabase as soon as this account's email is confirmed and
+    // they sign in — RLS requires a real session before it can be written.
+    queueForCloudSync(bundle)
     setAccountNotice(
       `Account created for ${accountEmail}. Check your email to confirm it, then sign in to see ${name.trim() || 'the'}'s plan.`,
     )
